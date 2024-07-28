@@ -1,0 +1,141 @@
+// LEETCODE 1334
+//Find the City With the Smallest Number of Neighbors at a Threshold Distance
+
+
+class Solution {
+public:
+    #define P pair<int, int>
+
+	// FUNCTION FOR DIJKSTRA'S ALGORITHM
+	// Single-source shortest path algorithm
+	// works only on graphs having non-negative edge weight
+	// work on both directed graphs and undirected graphs
+    void dijkstra(int n, unordered_map<int, vector<P>> &adj, vector<int> & result, int s){
+        priority_queue<P, vector<P>, greater<P>> pq;	// MIN-HEAP
+        pq.push({0,s});
+
+        fill(result.begin(), result.end(), INT_MAX);
+        result[s] = 0;
+
+        while(!pq.empty()){
+            int d = pq.top().first;
+            int node = pq.top().second;
+            pq.pop();
+
+            for(auto x: adj[node]){		// VISIT ALL VERTICES ADJACENT TO CURRENT VERTIX
+                int adjNode = x.first;
+                int dist = x.second;
+
+                if(d + dist < result[adjNode]){		//IF NEW DISTANCE < OLD STORED DISTANCE, THEN UPDATE IT
+                    result[adjNode] = d + dist;
+                    pq.push({d + dist, adjNode});
+                }
+            }
+        }
+    }
+
+	// FUNCTION FOR BELLMAN-FORD ALGORITHM--------------------------------------------
+	// Single source shortest path algorithm
+	// Works on both weighted and unweighted graphs
+	// capable of handling graphs with negative edge weights
+    void bellmanford(int n, vector<vector<int>>& edges, vector<int> & result, int s){
+        fill(result.begin(), result.end(), INT_MAX);
+        result[s] = 0;
+
+        for(int i=1; i<n; i++){
+            for(auto x: edges){
+                int u = x[0], v = x[1], w = x[2];
+
+                if(result[u] != INT_MAX && result[u] + w < result[v]){
+                    result[v] = result[u] + w;
+                }
+
+                if(result[v] != INT_MAX && result[v] + w < result[u]){
+                    result[u] = result[v] + w;
+                }
+            }
+        }
+    }
+
+	// FUNCTION FOR FLOYD WARSHALL ALGORITHM--------------------------------------------
+	// All pair shortest path algorithm
+	// Works for both the directed and undirected weighted graphs
+	// does not work for the graphs with negative cycles
+	// follows Dynamic Programming approach to check every possible path going via every possible node in order to calculate shortest distance between every pair of nodes.
+    void floydWarshall(int n, vector<vector<int>> &mat){
+        for(int k=0; k<n; k++){
+            for(int i=0; i<n; i++){
+                for(int j=0; j<n; j++){
+                    if (mat[i][k] != INT_MAX && mat[k][j] != INT_MAX) {
+                        mat[i][j] = min(mat[i][j], mat[i][k] + mat[k][j]);
+                    }
+                }
+            }
+        }
+    }
+
+    int findCity(int n, vector<vector<int>> &mat, int d){	// FUNCTION FOR GIVEN QUESTION
+        int city = -1;
+        int count = INT_MAX;
+
+        for(int i=0; i<n ; i++){
+            int reachable = 0;
+            for(int j=0; j<n ; j++){
+                if(i != j && mat[i][j] <= d)    reachable++;
+            }
+
+            if(count >= reachable){
+                count = reachable;
+                city = i;
+            }
+        }
+        
+        return city;
+    }
+
+    int findTheCity(int n, vector<vector<int>>& edges, int distanceThreshold) {
+
+        vector<vector<int>> mat(n, vector<int>(n, INT_MAX));    
+        for(int i=0; i<n; i++){
+            mat[i][i] = 0;
+        }
+
+
+		// floydWarshall
+        for(auto x: edges){                 
+            int u = x[0], v = x[1], w = x[2];
+            mat[u][v] = w;
+            mat[v][u] = w;
+        }
+        floydWarshall(n, mat);
+
+
+        /* // dijkstra
+        unordered_map<int, vector<P>> adj;
+        for(auto x: edges){                 
+            int u = x[0], v = x[1], w = x[2];
+            adj[u].push_back({v, w});
+            adj[v].push_back({u, w});
+        }
+
+        for(int i=0; i<n; i++){
+            // dijkstra(n, adj, mat[i], i);       
+        }
+        */
+
+
+        /* // bellmanford gives TLE
+        for(auto x: edges){                 
+            int u = x[0], v = x[1], w = x[2];
+            mat[u][v] = w;
+            mat[v][u] = w;
+        }
+        for(int i=0; i<n; i++){     
+            bellmanford(n, edges, mat[i], i);       
+        }
+        */
+
+        //find the city by iterating over
+        return findCity(n, mat, distanceThreshold);
+    }
+};
